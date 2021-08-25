@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net45;netstandard2.0;netstandard2.1</TargetFrameworks>
-    <Version>0.4.400</Version>
+    <Version>0.6-preview3</Version>
     <AssemblyName>Senparc.CO2NET.AspNet</AssemblyName>
     <RootNamespace>Senparc.CO2NET.AspNet</RootNamespace>
     <GeneratePackageOnBuild Condition=" '$(Configuration)' == 'Release' ">true</GeneratePackageOnBuild>
@@ -11,7 +11,7 @@
       Senparc.CO2NET 开源项目：
       https://github.com/Senparc/Senparc.CO2NET
     </Description>
-    <Copyright>Senparc Copyright © 2004~2020</Copyright>
+    <Copyright>Senparc Copyright © 2004~2021</Copyright>
     <PackageTags>.NET Core,.NET Framework,公共,基础库,CO2NET,ASP.NET</PackageTags>
     <Authors>Senparc</Authors>
     <Owners>Senparc</Owners>
