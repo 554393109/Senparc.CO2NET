@@ -1,4 +1,18 @@
-﻿using Senparc.CO2NET.Cache;
+﻿/*----------------------------------------------------------------
+    Copyright (C) 2021 Senparc
+
+    文件名：WebApiEngine.Doc.cs
+    文件功能描述：WebApi 自动生成引擎 - 文档相关
+
+
+    创建标识：Senparc - 20210627
+
+    修改标识：Senparc - 20211122
+    修改描述：v1.1.2 优化文档提取正则表达式
+   
+----------------------------------------------------------------*/
+
+using Senparc.CO2NET.Cache;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -43,7 +57,7 @@ namespace Senparc.CO2NET.WebApi
         /// <summary>
         /// 从 xml 中获取方法名和参数的正则
         /// </summary>
-        private static Regex regexForDoc = new Regex(@"(M\:)(?<docName>[^(]+)(?<paramsPart>\({1}.+\){1})", RegexOptions.Compiled);
+        private static Regex regexForDoc = new Regex(@"(M\:)(?<docName>[^(""]+)(?<paramsPart>\({1}.+\){1})", RegexOptions.Compiled);
 
         /// <summary>
         /// 获取 DocName
@@ -176,7 +190,7 @@ namespace Senparc.CO2NET.WebApi
                     if (!sourceApiXmlCollection.ContainsKey(sourceAssemblyName))
                     {
                         var xmlFileName = $"{sourceAssemblyName}.xml";//XML 文件名
-                        var xmlFilePath = Path.Combine(_docXmlPath, xmlFileName);
+                        var xmlFilePath = Path.Combine(DocXmlPath, xmlFileName);
                         if (File.Exists(xmlFilePath))
                         {
                             apiXmlInfo = new();
@@ -289,7 +303,7 @@ namespace Senparc.CO2NET.WebApi
                 return;
             }
 
-            var dynamicFilePath = GetDynamicFilePath(_docXmlPath);
+            var dynamicFilePath = GetDynamicFilePath(DocXmlPath);
             if (!Directory.Exists(dynamicFilePath))
             {
                 Directory.CreateDirectory(dynamicFilePath);

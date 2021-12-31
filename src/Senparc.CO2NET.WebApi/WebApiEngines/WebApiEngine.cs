@@ -7,9 +7,14 @@
 
     创建标识：Senparc - 20210627
 
+    修改标识：Senparc - 20211122
+    修改描述：v1.1 提供参数属性同步复制到动态 Api 的能力
+   
 ----------------------------------------------------------------*/
 
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Senparc.CO2NET.WebApi.ActionFilters;
 using Swashbuckle.AspNetCore.Annotations;
 using System;
 using System.Collections.Concurrent;
@@ -42,35 +47,40 @@ namespace Senparc.CO2NET.WebApi
 
         public static string GetDynamicFilePath(string apiXmlPath) => Path.Combine(apiXmlPath, "DynamicFiles");
 
-        private string _docXmlPath;
+        internal string DocXmlPath { get; set; }
+        internal int TaskCount { get; set; }
+
         private bool _showDetailApiLog = false;
         private readonly Lazy<FindApiService> _findWeixinApiService;
         private readonly ApiRequestMethod _defaultRequestMethod;
         private readonly bool _copyCustomAttributes;
-        private int _taskCount;
         private Type _typeOfApiBind = typeof(ApiBindAttribute);
         private Type _baseApiControllerType;
+        private bool _addApiControllerAttribute = true;
 
-        public bool BuildXml => _docXmlPath != null;
+        public bool BuildXml => DocXmlPath != null;
 
         /// <summary>
         /// WebApiEngine
         /// </summary>
-        /// <param name="defaultRequestMethod">默认请求方式</param>
-        /// <param name="baseApiControllerType">全局 ApiController 的基类，默认为 ControllerBase</param>
-        /// <param name="taskCount">同时执行线程数</param>
-        /// <param name="showDetailApiLog"></param>
-        /// <param name="copyCustomAttributes"></param>
-        /// <param name="defaultAction">默认请求类型，如 Post，Get</param>
-        public WebApiEngine(string docXmlPath, ApiRequestMethod defaultRequestMethod = ApiRequestMethod.Post, Type baseApiControllerType = null, bool copyCustomAttributes = true, int taskCount = 4, bool showDetailApiLog = false)
+        /// <param name="options"> WebApiEngine 配置</param>
+        public WebApiEngine(Action<WebApiEngineOptions> options = null)
         {
-            _docXmlPath = docXmlPath;
+            WebApiEngineOptions opt = new();
+            options?.Invoke(opt);
+
+            _ = opt.DefaultRequestMethod == ApiRequestMethod.GlobalDefault ? throw new Exception($"{nameof(opt.DefaultRequestMethod)} 不能作为默认请求类型！") : true;
+
+            DocXmlPath = opt.DocXmlPath;
             _findWeixinApiService = new Lazy<FindApiService>(new FindApiService());
-            _defaultRequestMethod = defaultRequestMethod;
-            _copyCustomAttributes = copyCustomAttributes;
-            _taskCount = taskCount;
-            _showDetailApiLog = showDetailApiLog;
-            _baseApiControllerType = baseApiControllerType ?? typeof(ControllerBase);
+            _defaultRequestMethod = opt.DefaultRequestMethod;
+            _baseApiControllerType = opt.BaseApiControllerType ?? typeof(ControllerBase);
+            _copyCustomAttributes = opt.CopyCustomAttributes;
+            TaskCount = opt.TaskCount;
+            _showDetailApiLog = opt.ShowDetailApiLog;
+            _addApiControllerAttribute = opt.AddApiControllerAttribute;
+            Register.ForbiddenExternalAccess = opt.ForbiddenExternalAccess;
+            WebApiEngine.AdditionalAttributeFunc = opt.AdditionalAttributeFunc;
         }
 
         /// <summary>
@@ -148,10 +158,10 @@ namespace Senparc.CO2NET.WebApi
 
             //预分配每个线程需要领取的任务（索引范围）
             var apiFilterMaxIndex = apiBindFilterList.Length - 1;//最大索引
-            var avgBlockCount = (int)((apiBindFilterList.Length - 1) / _taskCount);//每个线程（块）领取的平均数量
+            var avgBlockCount = (int)((apiBindFilterList.Length - 1) / TaskCount);//每个线程（块）领取的平均数量
             var lastEndIndex = -1;//上一个块的结束索引
 
-            for (int taskIndex = 0; taskIndex < _taskCount; taskIndex++)
+            for (int taskIndex = 0; taskIndex < TaskCount; taskIndex++)
             {
                 if (lastEndIndex >= apiFilterMaxIndex)
                 {
@@ -160,7 +170,7 @@ namespace Senparc.CO2NET.WebApi
 
                 var blockStart = Math.Min(lastEndIndex + 1, apiFilterMaxIndex);//当前块起始索引
                 var blockEnd = 0;//当前快结束索引
-                if (taskIndex == _taskCount - 1 || /*最后一个快，一直分配到最后（解决余数问题）*/
+                if (taskIndex == TaskCount - 1 || /*最后一个快，一直分配到最后（解决余数问题）*/
                     avgBlockCount == 0                  /*如果API总数比线程数还要少，则只够一个模块*/)
                 {
                     blockEnd = apiFilterMaxIndex;//
@@ -320,7 +330,6 @@ namespace Senparc.CO2NET.WebApi
                         }
 
                         //叠加类和特性的方法
-
                         foreach (var item in customAttrs)
                         {
                             if (item.AttributeType == _typeOfApiBind)
@@ -356,27 +365,64 @@ namespace Senparc.CO2NET.WebApi
                     //setPropMthdBldr.SetReturnType(apiMethodInfo.ReturnType);
 
                     //设置参数
-                    var boundType = false;
+                    var boundSourceMetadata = false;//参数使用了[FromBody]等特性标记
+                    var boundClassType = false;//参数中已经绑定了 class 复杂类型
                     //定义其他参数
                     for (int i = 0; i < parameters.Length; i++)
                     {
                         var p = parameters[i];
                         ParameterBuilder pb = setPropMthdBldr.DefineParameter(i + 1/*从1开始，0为返回值*/, p.Attributes, p.Name);
                         //处理参数，反之出现复杂类型的参数，抛出异常：InvalidOperationException: Action 'WeChat_OfficialAccountController.CardApi_GetOrderList (WeixinApiAssembly)' has more than one parameter that was specified or inferred as bound from request body. Only one parameter per action may be bound from body. Inspect the following parameters, and use 'FromQueryAttribute' to specify bound from query, 'FromRouteAttribute' to specify bound from route, and 'FromBodyAttribute' for parameters to be bound from body:
-                        if (p.ParameterType.IsClass)
+
+
+                        boundSourceMetadata = boundSourceMetadata || typeof(IBindingSourceMetadata).IsAssignableFrom(p.ParameterType);
+
+                        //复制添加单个参数上的所有特性
+                        try
                         {
-                            if (boundType == false)
+                            var paramAttrs = p.CustomAttributes;// CustomAttributeData.GetCustomAttributes(p.ParameterType).ToList();
+                            foreach (var item in paramAttrs)
                             {
-                                //第一个绑定，可以不处理
-                                boundType = true;
+                                var attrBuilder = new CustomAttributeBuilder(item.Constructor, item.ConstructorArguments.Select(z => z.Value).ToArray());
+                                pb.SetCustomAttribute(attrBuilder);
                             }
-                            else
+                        }
+                        catch (Exception)
+                        {
+                            //TODO：收集错误信息
+                            //throw;
+                        }
+
+                        try
+                        {
+                            if (p.ParameterType.IsClass && !boundClassType)
                             {
-                                //第二个开始使用标签
+                                boundClassType = true;//第一个绑定，可以不处理
+                            }
+                            else if (boundClassType && !boundSourceMetadata)
+                            {
+                                //第二个开始使用标签     TODO：可以自定义更多的类型
                                 var tFromQuery = typeof(FromQueryAttribute);
                                 pb.SetCustomAttribute(new CustomAttributeBuilder(tFromQuery.GetConstructor(new Type[0]), new object[0]));
                             }
+
+                            //if (!boundSourceMetadata && p.ParameterType.IsClass)
+                            //{
+                            //    if (boundClassType == false)
+                            //    {
+
+                            //    }
+                            //    else
+                            //    {
+
+                            //    }
+                            //}
                         }
+                        catch (Exception)
+                        {
+                            //throw;
+                        }
+
                         try
                         {
                             //设置默认值
@@ -575,9 +621,11 @@ namespace Senparc.CO2NET.WebApi
             IEnumerable<CreateIndex> create_indexes
             IEnumerable<DropIndex> drop_indexes
              */
-            //var t = typeof(ApiControllerAttribute);
-            //tb.SetCustomAttribute(new CustomAttributeBuilder(t.GetConstructor(new Type[0]), new object[0]));
-
+            if (_addApiControllerAttribute)
+            {
+                var t = typeof(ApiControllerAttribute);
+                tb.SetCustomAttribute(new CustomAttributeBuilder(t.GetConstructor(new Type[0]), new object[0]));
+            }
 
             //暂时取消登录验证  —— Jeffrey Su 2021.06.18
             //var t_0 = typeof(AuthorizeAttribute);
@@ -586,6 +634,16 @@ namespace Senparc.CO2NET.WebApi
 
             var t2 = typeof(RouteAttribute);
             tb.SetCustomAttribute(new CustomAttributeBuilder(t2.GetConstructor(new Type[] { typeof(string) }), new object[] { $"/api/{controllerKeyName}" }));
+
+            //TODO:Unit Test
+            //[ForbiddenExternalAccess]
+            if (Register.ForbiddenExternalAccess)
+            {
+                var forbiddenExternalAsyncAttr = typeof(ForbiddenExternalAccessAsyncFilter);
+                tb.SetCustomAttribute(new CustomAttributeBuilder(forbiddenExternalAsyncAttr.GetConstructor(new Type[0]), new object[0] { }));//只需要一个，和ForbiddenExternalAccessFilter两者可互换
+                //var forbiddenExternalAttr = typeof(ForbiddenExternalAccessFilter);
+                //tb.SetCustomAttribute(new CustomAttributeBuilder(forbiddenExternalAttr.GetConstructor(new Type[0]), new object[0] { }));
+            }
 
             //添加Controller级别的分类（暂时无效果）
 

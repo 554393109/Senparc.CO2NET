@@ -61,7 +61,7 @@ namespace Senparc.CO2NET.Utilities
             byte[] arr = new byte[stream.Length];
             stream.Position = 0;
             stream.Read(arr, 0, (int)stream.Length);
-#if NET45
+#if NET451
             return Convert.ToBase64String(arr, Base64FormattingOptions.None);
 #else
             return Convert.ToBase64String(arr);
@@ -106,7 +106,6 @@ namespace Senparc.CO2NET.Utilities
 
         #endregion
 
-#if !NET35 && !NET40
         #region 异步方法
 
         /// <summary>
@@ -119,7 +118,7 @@ namespace Senparc.CO2NET.Utilities
             byte[] arr = new byte[stream.Length];
             stream.Position = 0;
             await stream.ReadAsync(arr, 0, (int)stream.Length).ConfigureAwait(false);
-#if NET45
+#if NET451
             return Convert.ToBase64String(arr, Base64FormattingOptions.None);
 #else
             return Convert.ToBase64String(arr);
@@ -163,8 +162,6 @@ namespace Senparc.CO2NET.Utilities
         }
 
         #endregion
-#endif
-
 
     }
 }
