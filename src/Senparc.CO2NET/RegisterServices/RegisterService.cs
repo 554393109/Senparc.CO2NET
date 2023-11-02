@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,10 +19,10 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：RegisterService.cs
-    文件功能描述：Senparc.CO2NET SDK 快捷注册流程
+    文件功能描述：Senparc.CO2NET 快捷注册流程
 
 
     创建标识：Senparc - 20180222
@@ -46,7 +46,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 ----------------------------------------------------------------*/
 
 
-#if !NET451
+#if !NET462
 using Microsoft.Extensions.DependencyInjection;
 #endif
 
@@ -77,7 +77,7 @@ namespace Senparc.CO2NET.RegisterServices
             Senparc.CO2NET.Config.SenparcSetting = senparcSetting ?? new SenparcSetting();
         }
 
-#if !NET451
+#if !NET462
 
         /// <summary>
         /// 单个实例引用全局的 ServiceCollection
@@ -109,7 +109,7 @@ namespace Senparc.CO2NET.RegisterServices
             var register = new RegisterService(senparcSetting);
 
             //提供网站根目录
-            Senparc.CO2NET.Config.RootDictionaryPath = AppDomain.CurrentDomain.BaseDirectory;
+            Senparc.CO2NET.Config.RootDirectoryPath = AppDomain.CurrentDomain.BaseDirectory;
 
             //如果不注册此线程，则AccessToken、JsTicket等都无法使用SDK自动储存和管理。
             register.RegisterThreads();//默认把线程注册好

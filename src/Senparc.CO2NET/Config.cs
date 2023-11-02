@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
   
     文件名：Config.cs
     文件功能描述：全局配置文件
@@ -38,14 +38,17 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
     修改描述：v0.1.4 添加 SenparcSetting 全局配置属性
  
     修改标识：Senparc - 20180830
-    修改描述：v0.2.9 优化 Config.RootDictionaryPath 方法，可自动获取默认值
+    修改描述：v0.2.9 优化 Config.RootDirectoryPath 方法，可自动获取默认值
 
     修改标识：Senparc - 20180911
     修改描述：v0.8.10 提供 Config.HostingEnvironment 属性 
 
     修改标识：Senparc - 20211101
     修改描述：v1.6 修改 RootDictionaryPath 名为 RootDirectoryPath
-   
+ 
+    修改标识：Senparc - 20221219
+    修改描述：v2.1.4 RootDictionaryPath 设置为过期会抛错
+  
 ----------------------------------------------------------------*/
 
 
@@ -130,7 +133,7 @@ namespace Senparc.CO2NET
 
                 if (_rootDirectoryPath == null)
                 {
-#if NET451
+#if NET462
                     var appPath = AppDomain.CurrentDomain.BaseDirectory;
 
                     if (Regex.Match(appPath, $@"[\\/]$", RegexOptions.Compiled).Success)
@@ -155,7 +158,7 @@ namespace Senparc.CO2NET
         /// <summary>
         /// 网站根目录绝对路径
         /// </summary>
-        [Obsolete("请使用 RootDirectoryPath 属性")]
+        [Obsolete("请使用 RootDirectoryPath 属性", true)]
         public static string RootDictionaryPath
         {
             get => RootDirectoryPath;

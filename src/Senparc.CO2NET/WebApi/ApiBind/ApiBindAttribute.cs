@@ -1,11 +1,14 @@
 ﻿/*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：ApiBindAttribute.cs
     文件功能描述：ApiBindAttribute 特性
 
 
     创建标识：Senparc - 20210627
+
+    修改标识：Senparc - 20230614
+    修改描述：v1.4.1 Ignore 添加 virtual 关键字
 
 ----------------------------------------------------------------*/
 
@@ -32,7 +35,7 @@ namespace Senparc.CO2NET
         /// <summary>
         /// 是否忽略当前标签
         /// </summary>
-        public bool Ignore { get; set; }
+        public virtual bool Ignore { get; set; }
 
         /// <summary>
         /// ApiController 的基类，默认为 ControllerBase

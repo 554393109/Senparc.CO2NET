@@ -2,7 +2,7 @@
 #region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -20,7 +20,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：HttpClientHelper.cs
     文件功能描述：HttpClient 相关帮助类
@@ -52,7 +52,7 @@ namespace Senparc.CO2NET.HttpUtility
     /// </summary>
     public static class HttpClientHelper
     {
-        internal const string DEFAULT_CONTENT_TYPE = "text/xml";
+        internal const string DEFAULT_CONTENT_TYPE = "text/xml";//"application/octet-stream"
 
         /// <summary>
         /// 获取 Content
@@ -64,19 +64,20 @@ namespace Senparc.CO2NET.HttpUtility
             string contentType = DEFAULT_CONTENT_TYPE;
             if (formData != null && formData.Count > 0)
             {
-                contentType = "application/x-www-form-urlencoded";//如果需要提交表单，则使用特定的ContentType
+                //contentType = "application/x-www-form-urlencoded";//如果需要提交表单，则使用特定的ContentType
             }
             return contentType;
         }
 
 
-#if !NET451
+#if !NET462
 
         /// <summary>
         /// 获取 HttpClientHandler 对象
         /// </summary>
         /// <param name="cookieContainer"></param>
         /// <param name="webProxy"></param>
+        /// <param name="decompressionMethods"></param>
         /// <returns></returns>
         public static HttpClientHandler GetHttpClientHandler(CookieContainer cookieContainer = null, IWebProxy webProxy = null, DecompressionMethods decompressionMethods = DecompressionMethods.None)
         {

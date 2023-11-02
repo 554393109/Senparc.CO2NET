@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：Get.cs
     文件功能描述：Get
@@ -71,7 +71,7 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Text;
 using Senparc.CO2NET.Helpers;
-#if NET451
+#if NET462
 using System.Web.Script.Serialization;
 #else
 using Microsoft.Extensions.DependencyInjection;
@@ -97,7 +97,6 @@ namespace Senparc.CO2NET.HttpUtility
         {
             return SystemTime.Now.ToString("yyyyMMdd-HHmmss") + Guid.NewGuid().ToString("n").Substring(0, 6);
         }
-
 
         #region 同步方法
 
@@ -135,7 +134,7 @@ namespace Senparc.CO2NET.HttpUtility
             IServiceProvider serviceProvider,
             string url, Stream stream)
         {
-#if NET451
+#if NET462
             //ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3
             //ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(CheckValidationResult);
 
@@ -168,7 +167,7 @@ namespace Senparc.CO2NET.HttpUtility
             var dir = Path.GetDirectoryName(filePathName) ?? "/";
             Directory.CreateDirectory(dir);
 
-#if NET451
+#if NET462
 
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "GET";
@@ -248,6 +247,7 @@ namespace Senparc.CO2NET.HttpUtility
             }
 #endif
         }
+
         #endregion
 
         #region 异步方法
@@ -288,7 +288,7 @@ namespace Senparc.CO2NET.HttpUtility
             IServiceProvider serviceProvider,
             string url, Stream stream)
         {
-#if NET451
+#if NET462
             //ServicePointManager.SecurityProtocol = SecurityProtocolType.Ssl3
             //ServicePointManager.ServerCertificateValidationCallback = new RemoteCertificateValidationCallback(CheckValidationResult);
 
@@ -300,11 +300,12 @@ namespace Senparc.CO2NET.HttpUtility
             //    stream.WriteAsync(b);
             //}
 #else
-            HttpClient httpClient = serviceProvider.GetRequiredService<SenparcHttpClient>().Client;
-            var data = await httpClient.GetByteArrayAsync(url).ConfigureAwait(false);
-            await stream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
+            using (HttpClient httpClient = serviceProvider.GetRequiredService<SenparcHttpClient>().Client)
+            {
+                var data = await httpClient.GetByteArrayAsync(url).ConfigureAwait(false);
+                await stream.WriteAsync(data, 0, data.Length).ConfigureAwait(false);
+            }
 #endif
-
         }
 
         /// <summary>
@@ -322,49 +323,55 @@ namespace Senparc.CO2NET.HttpUtility
             var dir = Path.GetDirectoryName(filePathName) ?? "/";
             Directory.CreateDirectory(dir);
 
-#if NET451
+#if NET462
             System.Net.Http.HttpClient httpClient = new HttpClient();
 #else
             System.Net.Http.HttpClient httpClient = serviceProvider.GetRequiredService<SenparcHttpClient>().Client;
 #endif
-            //httpClient.Timeout = TimeSpan.FromMilliseconds(timeOut);  // 此处建议不要直接修改httpClient的Timeout属性，因为这是该Client的全局共享值，会影响同Client实例下的其他请求超时时间
-            // 微软技术文档原文链接【https://docs.microsoft.com/zh-cn/dotnet/api/system.net.http.httpclient.timeout?f1url=%3FappId%3DDev16IDEF1%26l%3DZH-CN%26k%3Dk(System.Net.Http.HttpClient.Timeout);k(DevLang-csharp)%26rd%3Dtrue&view=net-6.0】
-            // 文档提到“使用此实例的所有请求都将使用相同的超时值 HttpClient 。 你还可以使用任务上的为单个请求设置不同的超时 CancellationTokenSource 。”
-            using (var cts = new System.Threading.CancellationTokenSource(timeOut))
-            {
-                try
-                {
-                    using (var responseMessage = await httpClient.GetAsync(url, cancellationToken: cts.Token).ConfigureAwait(false))
-                    {
-                        if (responseMessage.StatusCode == HttpStatusCode.OK)
-                        {
-                            string responseFileName = null;
-                            //ContentDisposition可能会为Null
-                            if (responseMessage.Content.Headers.ContentDisposition != null &&
-                                responseMessage.Content.Headers.ContentDisposition.FileName != null &&
-                                responseMessage.Content.Headers.ContentDisposition.FileName != "\"\"")
-                            {
-                                responseFileName = Path.Combine(dir, responseMessage.Content.Headers.ContentDisposition.FileName.Trim('"'));
-                            }
 
-                            var fullName = responseFileName ?? Path.Combine(dir, GetRandomFileName());
-                            using (var fs = File.Open(fullName, FileMode.Create))
-                            {
-                                using (var responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
-                                {
-                                    await responseStream.CopyToAsync(fs).ConfigureAwait(false);
-                                    await fs.FlushAsync().ConfigureAwait(false);
-                                }
-                            }
-                            return fullName;
-                        }
-                        else
+            using (httpClient)
+            {
+                //httpClient.Timeout = TimeSpan.FromMilliseconds(timeOut);  // 此处建议不要直接修改httpClient的Timeout属性，因为这是该Client的全局共享值，会影响同Client实例下的其他请求超时时间
+                // 微软技术文档原文链接【https://docs.microsoft.com/zh-cn/dotnet/api/system.net.http.httpclient.timeout?f1url=%3FappId%3DDev16IDEF1%26l%3DZH-CN%26k%3Dk(System.Net.Http.HttpClient.Timeout);k(DevLang-csharp)%26rd%3Dtrue&view=net-6.0】
+                // 文档提到“使用此实例的所有请求都将使用相同的超时值 HttpClient 。 你还可以使用任务上的为单个请求设置不同的超时 CancellationTokenSource 。”
+                using (var cts = new System.Threading.CancellationTokenSource(timeOut))
+                {
+                    try
+                    {
+                        var responseMessage = await httpClient.GetAsync(url, cancellationToken: cts.Token).ConfigureAwait(false);
+
+                        using (responseMessage)
                         {
-                            return null;
+                            if (responseMessage.StatusCode == HttpStatusCode.OK)
+                            {
+                                string responseFileName = null;
+                                //ContentDisposition可能会为Null
+                                if (responseMessage.Content.Headers.ContentDisposition != null &&
+                                    responseMessage.Content.Headers.ContentDisposition.FileName != null &&
+                                    responseMessage.Content.Headers.ContentDisposition.FileName != "\"\"")
+                                {
+                                    responseFileName = Path.Combine(dir, responseMessage.Content.Headers.ContentDisposition.FileName.Trim('"'));
+                                }
+
+                                var fullName = responseFileName ?? Path.Combine(dir, GetRandomFileName());
+                                using (var fs = File.Open(fullName, FileMode.Create))
+                                {
+                                    using (var responseStream = await responseMessage.Content.ReadAsStreamAsync().ConfigureAwait(false))
+                                    {
+                                        await responseStream.CopyToAsync(fs).ConfigureAwait(false);
+                                        await fs.FlushAsync().ConfigureAwait(false);
+                                    }
+                                }
+                                return fullName;
+                            }
+                            else
+                            {
+                                return null;
+                            }
                         }
                     }
+                    catch { throw; }
                 }
-                catch { throw; }
             }
         }
         #endregion

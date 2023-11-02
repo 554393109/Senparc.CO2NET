@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：SenparcHttpClient.cs
     文件功能描述：SenparcHttpClient，用于提供 HttpClientFactory 的自定义类
@@ -33,12 +33,16 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
     修改标识：Senparc - 20200220
     修改描述：v1.1.100 重构 SenparcDI
 
+    修改标识：Senparc - 20221115
+    修改描述：v2.1.3 针对 .NET 7.0 处理对 Cookie 的特殊判断
+
 ----------------------------------------------------------------*/
 
 
-#if !NET451
+#if !NET462
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Net.Http.Headers;
+using Senparc.CO2NET.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -98,7 +102,13 @@ namespace Senparc.CO2NET.HttpUtility
             }
 
             var cookieHeader = cookieContainer.GetCookieHeader(uri);
-            Client.DefaultRequestHeaders.Add(HeaderNames.Cookie, cookieHeader);
+
+            // .NET 7 此处如果传入空字符串，会抛异常：
+            // System.FormatException: The format of value '' is invalid.
+            if (!cookieHeader.IsNullOrEmpty())
+            {
+                Client.DefaultRequestHeaders.Add(HeaderNames.Cookie, cookieHeader);
+            }
         }
 
 

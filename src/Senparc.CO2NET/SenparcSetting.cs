@@ -1,5 +1,5 @@
 ﻿/*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：SenparcSetting.cs
     文件功能描述：CO2NET 全局设置
@@ -69,7 +69,7 @@ namespace Senparc.CO2NET
             IsDebug = isDebug;
         }
 
-#if NET451
+#if NET462
         /// <summary>
         /// 从 Web.Config 文件自动生成 SenparcSetting
         /// </summary>

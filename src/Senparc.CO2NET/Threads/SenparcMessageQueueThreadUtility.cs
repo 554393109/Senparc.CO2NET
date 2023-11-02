@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：SenparcMessageQueueThreadUtility.cs
     文件功能描述：SenparcMessageQueue消息队列线程处理
@@ -61,7 +61,7 @@ namespace Senparc.CO2NET.Threads
             {
                 var mq = new SenparcMessageQueue();
 
-#if NET451
+#if NET462
                 System.Diagnostics.Trace.WriteLine(string.Format("SenparcMessageQueueThreadUtility执行析构函数"));
                 System.Diagnostics.Trace.WriteLine(string.Format("当前队列数量：{0}", mq.GetCount()));
 #endif
@@ -71,7 +71,7 @@ namespace Senparc.CO2NET.Threads
             catch (Exception ex)
             {
                 //此处可以添加日志
-#if NET451
+#if NET462
 
                 System.Diagnostics.Trace.WriteLine(string.Format("SenparcMessageQueueThreadUtility执行析构函数错误：{0}", ex.Message));
 #endif

@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
     
     文件名：ReflectionHelper.cs
     文件功能描述：反射帮助类
@@ -39,6 +39,9 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 
     修改标识：Senparc - 20200228
     修改描述：v1.3.102 提供 ReflectionHelper 异常是否记录日志的选项
+
+    修改标识：Senparc - 20230110
+    修改描述：v2.1.6 ReflectionHelper.GetStaticMember() 方法添加找不到目标对象的 null 判断，不再抛出异常
 
 ----------------------------------------------------------------*/
 
@@ -86,7 +89,7 @@ namespace Senparc.CO2NET.Helpers
             {
                 string fullName = nameSpace + "." + className;//命名空间.类型名
                                                               //此为第一种写法
-#if !NET451
+#if !NET462
                 //object ect = Assembly.Load(new AssemblyName(assemblyName)).CreateInstance(fullName);//加载程序集，创建程序集里面的 命名空间.类型名 实例s
 
                 //.net core 2.1这种方法也已经支持
@@ -120,16 +123,28 @@ namespace Senparc.CO2NET.Helpers
         /// <param name="memberName">属性名称（忽略大小写）</param>
         /// <param name="recordLog">是否记录日志</param>
         /// <returns></returns>
-        public static object GetStaticMember(string assemblyName, string nameSpace, string className,string memberName,bool recordLog=false)
+        public static object GetStaticMember(string assemblyName, string nameSpace, string className, string memberName, bool recordLog = false)
         {
             try
             {
                 string fullName = nameSpace + "." + className;//命名空间.类型名
                 string path = fullName + "," + assemblyName;//命名空间.类型名,程序集
                 var type = Type.GetType(path);
+
+                if (type == null)
+                {
+                    return null;
+                }
+
                 PropertyInfo[] props = type.GetProperties();
                 var prop = props.FirstOrDefault(z => z.Name.Equals(memberName, StringComparison.OrdinalIgnoreCase));
-                return prop.GetValue(null,null);
+
+                if (prop == null)
+                {
+                    return null;
+                }
+
+                return prop.GetValue(null, null);
             }
             catch (Exception ex)
             {
@@ -154,6 +169,12 @@ namespace Senparc.CO2NET.Helpers
             {
                 PropertyInfo[] props = type.GetProperties();
                 var prop = props.FirstOrDefault(z => z.Name.Equals(memberName, StringComparison.OrdinalIgnoreCase));
+
+                if (prop == null)
+                {
+                    return null;
+                }
+                
                 return prop.GetValue(null, null);
             }
             catch (Exception ex)

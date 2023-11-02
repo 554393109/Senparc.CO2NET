@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：LocalObjectCacheHelper.cs
     文件功能描述：全局静态数据源帮助类。
@@ -29,7 +29,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 
  ----------------------------------------------------------------*/
 
-#if !NET451
+#if !NET462
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 #endif
@@ -45,7 +45,7 @@ namespace Senparc.CO2NET.Cache
     /// </summary>
     public static class LocalObjectCacheHelper
     {
-#if NET451
+#if NET462
         /// <summary>
         /// 所有数据集合的列表
         /// </summary>
@@ -78,7 +78,7 @@ namespace Senparc.CO2NET.Cache
                         }
                         catch
                         {
-                            throw new CacheException("IMemoryCache 依赖注入未设置！请在 Startup.cs 中或其调用的函数执行了 LocalObjectCacheStrategy.GenerateMemoryCache() 方法！");
+                            throw new CacheException("IMemoryCache 依赖注入未设置！如果您使用的是本地缓存，请确保在 Startup.cs 中执行了 services.AddMemoryCache() 方法！");
                         }
                     }
                 }

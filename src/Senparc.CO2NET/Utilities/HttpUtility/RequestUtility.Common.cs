@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：RequestUtility.cs
     文件功能描述：获取请求结果
@@ -67,6 +67,9 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
     修改标识：Senparc - 20190928
     修改描述：v1.0.101 RequestUtility.GetRequestMemoryStream() 增加对 .NET Core 3.0 AllowSynchronousIO 的设置
 
+    修改标识：Senparc - 20220721
+    修改描述：v1.0.101 RequestUtility.GetRequestMemoryStream() 增加对 .NET Core 3.0 AllowSynchronousIO 的设置
+
 ----------------------------------------------------------------*/
 
 using System;
@@ -79,7 +82,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Senparc.CO2NET.Helpers;
 using Senparc.CO2NET.WebProxy;
-#if NET451
+#if NET462
 using System.Web;
 #else
 using System.Net.Http;
@@ -96,7 +99,7 @@ namespace Senparc.CO2NET.HttpUtility
     {
         #region 代理
 
-#if NET451
+#if NET462
         private static System.Net.WebProxy _webproxy = null;
         /// <summary>
         /// 设置Web代理
@@ -175,7 +178,7 @@ namespace Senparc.CO2NET.HttpUtility
             return true;
         }
 
-#if NET451
+#if NET462
         /// <summary>
         /// 设置HTTP头
         /// </summary>
@@ -236,15 +239,23 @@ namespace Senparc.CO2NET.HttpUtility
         {
             //fileName = fileName.UrlEncode();
             var fileContent = new StreamContent(stream);
+
             //上传格式参考：
             //https://mp.weixin.qq.com/wiki?t=resource/res_main&id=mp1444738729
+            //https://developer.work.weixin.qq.com/document/path/91054
             //https://work.weixin.qq.com/api/doc#10112
-            fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
-            {
-                Name = "\"{0}\"".FormatWith(formName),
-                FileName = "\"" + fileName + "\"",
-                Size = stream.Length
-            }; // the extra quotes are key here
+
+            //这种方法会对中文名进行编码，腾讯服务器识别不了，如：=_utf-8_B_5Lit5paHLnhsc3g=_=
+            //fileContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
+            //{
+            //    Name = $"\"{formName}\"",
+            //    FileName = $"\"{fileName}\"",
+            //    Size = stream.Length,
+            //}; // the extra quotes are key here
+
+            fileName = Encoding.GetEncoding("ISO-8859-1").GetString(Encoding.UTF8.GetBytes(fileName));
+
+            fileContent.Headers.Add("Content-Disposition", $"form-data; name=\"{formName}\"; filename=\"{fileName}\"; filelength={stream.Length}");
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(contentType);
             return fileContent;
         }
@@ -271,7 +282,8 @@ namespace Senparc.CO2NET.HttpUtility
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/xml", 0.9));
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("image/webp"));
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("*/*", 0.8));
-
+            //client.DefaultRequestHeaders.AcceptCharset.Add(new StringWithQualityHeaderValue("utf-8", 1));
+            
             //HttpContent hc = new StringContent(null);
             //HttpContentHeader(hc, timeOut);
 
@@ -280,7 +292,6 @@ namespace Senparc.CO2NET.HttpUtility
             //httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Chrome", "61.0.3163.100 Safari/537.36"));
 
             //httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36"));
-
             client.DefaultRequestHeaders.Add("Timeout", timeOut.ToString());
             client.DefaultRequestHeaders.Add("KeepAlive", "true");
 

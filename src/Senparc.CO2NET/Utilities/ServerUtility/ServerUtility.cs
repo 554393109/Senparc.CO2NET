@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
     
     文件名：ServerUtility.cs
     文件功能描述：服务器工具类
@@ -59,7 +59,7 @@ namespace Senparc.CO2NET.Utilities
             {
                 if (_appDomainAppPath == null)
                 {
-#if NET451
+#if NET462
                     _appDomainAppPath = HttpRuntime.AppDomainAppPath;
 #else
                     _appDomainAppPath = AppContext.BaseDirectory; //dll所在目录：;
@@ -70,7 +70,7 @@ namespace Senparc.CO2NET.Utilities
             set
             {
                 _appDomainAppPath = value;
-#if !NET451
+#if !NET462
                 var pathSeparator = Path.DirectorySeparatorChar.ToString();
                 var altPathSeparator = Path.AltDirectorySeparatorChar.ToString();
                 if (!_appDomainAppPath.EndsWith(pathSeparator) && !_appDomainAppPath.EndsWith(altPathSeparator))
@@ -97,18 +97,18 @@ namespace Senparc.CO2NET.Utilities
                 //if (!Config.RootDictionaryPath.EndsWith("/") || Config.RootDictionaryPath.EndsWith("\\"))
                 var pathSeparator = Path.DirectorySeparatorChar.ToString();
                 var altPathSeparator = Path.AltDirectorySeparatorChar.ToString();
-                if (!Config.RootDictionaryPath.EndsWith(pathSeparator) && !Config.RootDictionaryPath.EndsWith(altPathSeparator))
+                if (!Config.RootDirectoryPath.EndsWith(pathSeparator) && !Config.RootDirectoryPath.EndsWith(altPathSeparator))
                 {
-                    Config.RootDictionaryPath += pathSeparator;
+                    Config.RootDirectoryPath += pathSeparator;
                 }
 
                 if (virtualPath.StartsWith("~/"))
                 {
-                    return virtualPath.Replace("~/", Config.RootDictionaryPath).Replace("/", pathSeparator);
+                    return virtualPath.Replace("~/", Config.RootDirectoryPath).Replace("/", pathSeparator);
                 }
                 else
                 {
-                    return Path.Combine(Config.RootDictionaryPath, virtualPath);
+                    return Path.Combine(Config.RootDirectoryPath, virtualPath);
                 }
             }
         }

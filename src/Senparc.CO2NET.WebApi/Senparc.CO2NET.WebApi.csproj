@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;netcoreapp3.1;net5.0;net6.0</TargetFrameworks>
-    <Version>1.1.4</Version>
+    <TargetFrameworks>netstandard2.1;netcoreapp3.1;net6.0;net7.0</TargetFrameworks>
+    <Version>1.4.2</Version>
     <LangVersion>latest</LangVersion>
     <AssemblyName>Senparc.CO2NET.WebApi</AssemblyName>
     <RootNamespace>Senparc.CO2NET.WebApi</RootNamespace>
@@ -9,7 +9,7 @@
     <Description>
 			Senparc.CO2NET.WebApi 应用性能管理
 		</Description>
-    <Copyright>Senparc Copyright © 2004~2022</Copyright>
+    <Copyright>Senparc Copyright © 2004~2023</Copyright>
     <PackageTags>WebApi,.NET Core,.NET Framework,公共,基础库,CO2NET</PackageTags>
     <Authors>Senparc</Authors>
     <Owners>Senparc</Owners>
@@ -33,6 +33,8 @@
 		v1.1 提供参数属性同步复制到动态 Api 的能力
 		v1.1.2 优化文档提取正则表达式
 		v1.1.3 添加 AddApiControllerAttribute 选项，默认为 true
+		v1.3 提供 .NET 7.0 支持
+		v1.4.1 使用 [ApiBind(Ignore = false)]，添加完善对整个类的 API 生成忽略忽略
 </PackageReleaseNotes>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
@@ -53,11 +55,14 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.2.5" />
-    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.2.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="6.4.0" />
     <!--<PackageReference Include="System.Reflection.Emit" Version="4.7.0" />-->
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Senparc.CO2NET.AspNet\Senparc.CO2NET.AspNet.csproj" />
     <ProjectReference Include="..\Senparc.CO2NET\Senparc.CO2NET.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Update="Microsoft.SourceLink.GitHub" Version="1.1.1" />
   </ItemGroup>
 </Project>

@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：RedisObjectCacheStrategy.cs
     文件功能描述：Redis的Object类型容器缓存（Key为String类型）。
@@ -44,7 +44,10 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
     修改标识：Senparc - 20190914
     修改描述：v3.5.4 fix bug：GetServer().Keys() 方法添加 database 索引值
 
- ----------------------------------------------------------------*/
+    修改标识：Senparc - 20230527
+    修改描述：v4.1.3 RedisObjectCacheStrategy 方法添加纯字符串的判断
+
+----------------------------------------------------------------*/
 
 using System;
 using System.Collections.Generic;
@@ -127,9 +130,19 @@ namespace Senparc.CO2NET.Cache.Redis
             var value = _cache.StringGet(cacheKey);
             if (value.HasValue)
             {
-                return value.ToString().DeserializeFromCache();
+                try
+                {
+                    return value.ToString().DeserializeFromCache();
+                }
+                catch
+                {
+                    return value.ToString();
+                }
             }
-            return value;
+            else
+            {
+                return null;
+            }
         }
 
         public override T Get<T>(string key, bool isFullKey = false)
@@ -255,9 +268,19 @@ namespace Senparc.CO2NET.Cache.Redis
             var value = await _cache.StringGetAsync(cacheKey).ConfigureAwait(false);
             if (value.HasValue)
             {
-                return value.ToString().DeserializeFromCache();
+                try
+                {
+                    return value.ToString().DeserializeFromCache();
+                }
+                catch
+                {
+                    return value.ToString();
+                }
             }
-            return value;
+            else
+            {
+                return null;
+            }
         }
 
         public override async Task<T> GetAsync<T>(string key, bool isFullKey = false)

@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
     
     文件名：JsonSetting.cs
     文件功能描述：JSON字符串定义
@@ -56,7 +56,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Reflection;
-//#if NET451
+//#if NET462
 //using System.Web.Script.Serialization;
 //#endif
 
@@ -129,7 +129,7 @@ namespace Senparc.CO2NET.Helpers.Serializers
         }
     }
 
-    //#if NET451
+    //#if NET462
 
     //    /// <summary>
     //    /// 微信 JSON 转换器
@@ -316,7 +316,7 @@ namespace Senparc.CO2NET.Helpers.Serializers
         {
             var property = base.CreateProperty(member, memberSerialization);
 
-#if NET451
+#if NET462
             //IgnoreNull标注的字段根据IgnoreNulls设定是否序列化
             var ignoreNull = member.GetCustomAttribute<JsonSetting.IgnoreNullAttribute>();
             if (ignoreNull != null || IgnoreNulls)

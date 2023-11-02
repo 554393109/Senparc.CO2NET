@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：RequestUtility.Get.cs
     文件功能描述：获取请求结果（Get）
@@ -38,6 +38,10 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 
     修改标识：554393109 - 20220208
     修改描述：v2.0.3 修改HttpClient请求超时的实现方式
+
+    修改标识：Senparc - 20230711
+    修改描述：v2.2.1 优化 Http 请求，及时关闭资源
+
 ----------------------------------------------------------------*/
 
 using System;
@@ -49,14 +53,14 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 using Senparc.CO2NET.Helpers;
-#if NET451
+#if NET462
 using System.Web;
 #else
 using System.Net.Http;
 using System.Net.Http.Headers;
 using Microsoft.Extensions.DependencyInjection;
 #endif
-#if !NET451
+#if !NET462
 using Senparc.CO2NET.WebProxy;
 #endif
 
@@ -69,7 +73,7 @@ namespace Senparc.CO2NET.HttpUtility
     {
         #region 公用静态方法
 
-#if NET451
+#if NET462
         /// <summary>
         /// .NET 4.5 版本的HttpWebRequest参数设置
         /// </summary>
@@ -97,7 +101,7 @@ namespace Senparc.CO2NET.HttpUtility
         }
 #endif
 
-#if !NET451
+#if !NET462
         /// <summary>
         /// .NET Core 版本的HttpWebRequest参数设置
         /// </summary>
@@ -135,7 +139,7 @@ namespace Senparc.CO2NET.HttpUtility
             IServiceProvider serviceProvider,
             string url, Encoding encoding = null)
         {
-#if NET451
+#if NET462
             WebClient wc = new WebClient();
             wc.Proxy = _webproxy;
             wc.Encoding = encoding ?? Encoding.UTF8;
@@ -143,8 +147,10 @@ namespace Senparc.CO2NET.HttpUtility
 #else
             var handler = HttpClientHelper.GetHttpClientHandler(null, SenparcHttpClientWebProxy, DecompressionMethods.GZip);
 
-            HttpClient httpClient = serviceProvider.GetRequiredService<SenparcHttpClient>().Client;
-            return httpClient.GetStringAsync(url).Result;
+            using (HttpClient httpClient = serviceProvider.GetRequiredService<SenparcHttpClient>().Client)
+            {
+                return httpClient.GetStringAsync(url).Result;
+            }
 #endif
         }
 
@@ -166,7 +172,7 @@ namespace Senparc.CO2NET.HttpUtility
             string url, CookieContainer cookieContainer = null, Encoding encoding = null, X509Certificate2 cer = null,
             string refererUrl = null, bool useAjax = false, Dictionary<string, string> headerAddition = null, int timeOut = Config.TIME_OUT)
         {
-#if NET451
+#if NET462
             HttpWebRequest request = HttpGet_Common_Net45(url, cookieContainer, encoding, cer, refererUrl, useAjax, timeOut);
 
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
@@ -188,22 +194,27 @@ namespace Senparc.CO2NET.HttpUtility
 
             var httpClient = HttpGet_Common_NetCore(serviceProvider, url, cookieContainer, encoding, cer, refererUrl, useAjax, headerAddition, timeOut);
 
-            using (var cts = new System.Threading.CancellationTokenSource(timeOut))
+            using (httpClient)
             {
-                try
+                using (var cts = new System.Threading.CancellationTokenSource(timeOut))
                 {
-                    var response = httpClient.GetAsync(url, cancellationToken: cts.Token).GetAwaiter().GetResult();//获取响应信息
+                    try
+                    {
+                        var response = httpClient.GetAsync(url, cancellationToken: cts.Token).GetAwaiter().GetResult();//获取响应信息
+                        using (response)
+                        {
+                            HttpClientHelper.SetResponseCookieContainer(cookieContainer, response);//设置 Cookie
 
-                    HttpClientHelper.SetResponseCookieContainer(cookieContainer, response);//设置 Cookie
-
-                    return response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                            return response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+                        }
+                    }
+                    catch { throw; }
                 }
-                catch { throw; }
             }
 #endif
         }
 
-#if NET451
+#if NET462
 
         /// <summary>
         /// 获取HttpWebResponse或HttpResponseMessage对象，本方法通常用于测试）
@@ -282,7 +293,7 @@ namespace Senparc.CO2NET.HttpUtility
             IServiceProvider serviceProvider,
             string url, Encoding encoding = null)
         {
-#if NET451
+#if NET462
             WebClient wc = new WebClient();
             wc.Proxy = _webproxy;
             wc.Encoding = encoding ?? Encoding.UTF8;
@@ -295,7 +306,10 @@ namespace Senparc.CO2NET.HttpUtility
             };
 
             HttpClient httpClient = serviceProvider.GetRequiredService<SenparcHttpClient>().Client;
-            return await httpClient.GetStringAsync(url).ConfigureAwait(false);
+            using (httpClient)
+            {
+                return await httpClient.GetStringAsync(url).ConfigureAwait(false);
+            }
 #endif
 
         }
@@ -318,7 +332,7 @@ namespace Senparc.CO2NET.HttpUtility
             string url, CookieContainer cookieContainer = null, Encoding encoding = null, X509Certificate2 cer = null,
             string refererUrl = null, bool useAjax = false, Dictionary<string, string> headerAddition = null, int timeOut = Config.TIME_OUT)
         {
-#if NET451
+#if NET462
             HttpWebRequest request = HttpGet_Common_Net45(url, cookieContainer, encoding, cer, refererUrl, useAjax, timeOut);
 
             HttpWebResponse response = (HttpWebResponse)(await request.GetResponseAsync().ConfigureAwait(false));
@@ -339,24 +353,31 @@ namespace Senparc.CO2NET.HttpUtility
 #else
             var httpClient = HttpGet_Common_NetCore(serviceProvider, url, cookieContainer, encoding, cer, refererUrl, useAjax, headerAddition, timeOut);
 
-            using (var cts = new System.Threading.CancellationTokenSource(timeOut))
+            using (httpClient)
             {
-                try
+                using (var cts = new System.Threading.CancellationTokenSource(timeOut))
                 {
-                    var response = await httpClient.GetAsync(url, cancellationToken: cts.Token).ConfigureAwait(false);//获取响应信息
+                    try
+                    {
+                        var response = await httpClient.GetAsync(url, cancellationToken: cts.Token).ConfigureAwait(false);//获取响应信息
 
-                    HttpClientHelper.SetResponseCookieContainer(cookieContainer, response);//设置 Cookie
+                        using (response)
+                        {
+                            HttpClientHelper.SetResponseCookieContainer(cookieContainer, response);//设置 Cookie
 
-                    var retString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                            var retString = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
 
-                    return retString;
+                            return retString;
+                        }
+
+                    }
+                    catch { throw; }
                 }
-                catch { throw; }
             }
 #endif
         }
 
-#if NET451
+#if NET462
 
         /// <summary>
         /// 获取HttpWebResponse或HttpResponseMessage对象，本方法通常用于测试）

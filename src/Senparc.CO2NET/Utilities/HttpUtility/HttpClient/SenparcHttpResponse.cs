@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：SenparcHttpResponse.cs
     文件功能描述：统一封装HttpResonse请求，提供Http请求过程中的调试、跟踪等扩展能力
@@ -40,7 +40,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using Senparc.CO2NET.Extensions;
-#if NET451
+#if NET462
 using System.Web;
 #else
 using System.Net.Http;
@@ -54,7 +54,7 @@ namespace Senparc.CO2NET.HttpUtility
     /// </summary>
     public class SenparcHttpResponse
     {
-#if NET451
+#if NET462
         public HttpWebResponse Result { get; set; }
 
         public SenparcHttpResponse(HttpWebResponse httpWebResponse)
@@ -77,7 +77,7 @@ namespace Senparc.CO2NET.HttpUtility
 //        {
 //            get
 //            {
-//#if NET451
+//#if NET462
 //                var values = Result.Headers.GetValues("X-Requested-With");
 //                return values != null ? values.FirstOrDefault().IsNullOrEmpty() : false;
 //#else

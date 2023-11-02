@@ -1,5 +1,5 @@
 ﻿/*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：MemcachedObjectCacheStrategy.cs
     文件功能描述：本地锁
@@ -25,6 +25,9 @@
     修改标识：Senparc - 20200220
     修改描述：v1.1.100 重构 SenparcDI
 
+    修改标识：Senparc - 20230527
+    修改描述：v4.1.3 MemcachedObjectCacheStrategy.Get() 方法添加纯字符串的判断
+
 ----------------------------------------------------------------*/
 
 using System;
@@ -36,8 +39,9 @@ using Enyim.Caching;
 using Enyim.Caching.Configuration;
 using Enyim.Caching.Memcached;
 using Senparc.CO2NET.Exceptions;
+using Newtonsoft.Json.Linq;
 
-#if !NET451
+#if !NET462
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
@@ -93,7 +97,7 @@ namespace Senparc.CO2NET.Cache.Memcached
                     }
                 }
 
-#if !NET451
+#if !NET462
                 if (dic.Count() > 0)
                 {
                     SenparcDI.GlobalServiceCollection.AddSenparcMemcached(options =>
@@ -161,7 +165,7 @@ namespace Senparc.CO2NET.Cache.Memcached
             //                //var cache = new MemcachedClient(config);'
 
 
-            //#if NET451 || NET461
+            //#if NET462
             //                var cache = new MemcachedClient(config);
             //#else
             //                var cache = new MemcachedClient(null, config);
@@ -196,7 +200,7 @@ namespace Senparc.CO2NET.Cache.Memcached
         MemcachedObjectCacheStrategy(/*ILoggerFactory loggerFactory, IOptions<MemcachedClientOptions> optionsAccessor*/)
         {
             _config = GetMemcachedClientConfiguration();
-#if NET451 //|| NET461
+#if NET462
             Cache = new MemcachedClient(_config);
 #else
             var serviceProvider = SenparcDI.GlobalServiceCollection.BuildServiceProvider();
@@ -227,7 +231,7 @@ namespace Senparc.CO2NET.Cache.Memcached
 
         #region 配置
 
-#if NET451
+#if NET462
         private static MemcachedClientConfiguration GetMemcachedClientConfiguration()
 #else
         private static MemcachedClientConfiguration GetMemcachedClientConfiguration(/*ILoggerFactory loggerFactory, IOptions<MemcachedClientOptions> optionsAccessor*/)
@@ -235,7 +239,7 @@ namespace Senparc.CO2NET.Cache.Memcached
         {
             //每次都要新建
 
-#if NET451
+#if NET462
             var config = new MemcachedClientConfiguration();
             foreach (var server in _serverlist)
             {
@@ -351,9 +355,22 @@ namespace Senparc.CO2NET.Cache.Memcached
             }
 
             var cacheKey = GetFinalKey(key, isFullKey);
-            var json = Cache.Get<string>(cacheKey);
-            var obj = json.DeserializeFromCache();
-            return obj;
+            var value = Cache.Get<string>(cacheKey);
+            if (value != null)
+            {
+                try
+                {
+                    return value.DeserializeFromCache();
+                }
+                catch
+                {
+                    return value;
+                }
+            }
+            else
+            {
+                return null;
+            }
         }
 
 
@@ -426,7 +443,7 @@ namespace Senparc.CO2NET.Cache.Memcached
 
         #region 异步方法
 
-#if NET451
+#if NET462
 
         //当前使用的 Memcached 插件在 .NET 4.5 下未提供异步方法
 
@@ -547,9 +564,23 @@ namespace Senparc.CO2NET.Cache.Memcached
             }
 
             var cacheKey = GetFinalKey(key, isFullKey);
-            var json = await Cache.GetAsync<string>(cacheKey).ConfigureAwait(false);
-            var obj = json?.Value.DeserializeFromCache();
-            return obj;
+            var value = await Cache.GetAsync<string>(cacheKey).ConfigureAwait(false);
+            if (value != null)
+            {
+                try
+                {
+                    return value.Value.DeserializeFromCache();
+                }
+                catch
+                {
+                    return value.Value;
+                }
+            }
+            else
+            {
+                return null;
+            }
+
         }
 
 

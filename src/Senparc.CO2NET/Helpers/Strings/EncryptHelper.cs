@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
  
     创建标识：Senparc - 20160808
     创建描述：安全帮助类，提供SHA-1、AES算法等
@@ -46,6 +46,9 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
     修改标识：Senparc - 20210831
     修改描述：v1.5.1 增加和丰富 EncryptHelper 中加密方法（SHA1、AesGcmDecrypt、CRC32）
 
+    修改标识：Senparc - 20221220
+    修改描述：v2.1.5 新增 EncryptHelper.GetCertString() 以及 GetCertStringFromFile() 方法
+
 ----------------------------------------------------------------*/
 
 
@@ -58,6 +61,7 @@ using System.Linq;
 using System.Runtime.InteropServices.ComTypes;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Senparc.CO2NET.Helpers
 {
@@ -171,7 +175,7 @@ namespace Senparc.CO2NET.Helpers
         //        public static string GetSha1(string str)
         //        {
         //            //建立SHA1对象
-        //#if NET451
+        //#if NET462
         //            SHA1 sha = new SHA1CryptoServiceProvider();
         //#else
         //            SHA1 sha = SHA1.Create();
@@ -214,7 +218,6 @@ namespace Senparc.CO2NET.Helpers
             }
         }
 
-
         #endregion
 
         #region MD5
@@ -229,7 +232,7 @@ namespace Senparc.CO2NET.Helpers
         {
             string retStr;
 
-#if NET451
+#if NET462
             MD5CryptoServiceProvider m5 = new MD5CryptoServiceProvider();
 #else
             MD5 m5 = MD5.Create();
@@ -274,7 +277,7 @@ namespace Senparc.CO2NET.Helpers
                 //使用UTF-8编码
                 return GetMD5("utf-8", Encoding.GetEncoding(charset));
 
-                //#if NET451
+                //#if NET462
                 //                inputBye = Encoding.GetEncoding("GB2312").GetBytes(encypStr);
                 //#else
                 //                inputBye = Encoding.GetEncoding(936).GetBytes(encypStr);
@@ -378,7 +381,7 @@ namespace Senparc.CO2NET.Helpers
         public static byte[] AESEncrypt(byte[] inputdata, byte[] iv, string strKey)
         {
             //分组加密算法   
-#if NET451
+#if NET462
             SymmetricAlgorithm des = Rijndael.Create();
 #else
             SymmetricAlgorithm des = Aes.Create();
@@ -415,7 +418,7 @@ namespace Senparc.CO2NET.Helpers
         /// <returns></returns>
         public static byte[] AESDecrypt(byte[] inputdata, byte[] iv, string strKey)
         {
-#if NET451
+#if NET462
             SymmetricAlgorithm des = Rijndael.Create();
 #else
             SymmetricAlgorithm des = Aes.Create();
@@ -479,7 +482,7 @@ namespace Senparc.CO2NET.Helpers
             return Convert.ToBase64String(resultArray, 0, resultArray.Length);
 
 
-            //#if NET451
+            //#if NET462
             //            SymmetricAlgorithm des = Rijndael.Create();
             //#else
             //            SymmetricAlgorithm des = Aes.Create();
@@ -524,7 +527,7 @@ namespace Senparc.CO2NET.Helpers
 
 
             //RijndaelManaged aes = new RijndaelManaged();
-#if NET451
+#if NET462
             SymmetricAlgorithm aes = Rijndael.Create();
 #else
             SymmetricAlgorithm aes = Aes.Create();
@@ -553,7 +556,7 @@ namespace Senparc.CO2NET.Helpers
             //            }
             //            finally
             //            {
-            //#if NET451
+            //#if NET462
             //                cryptoStream.Close();
             //                mStream.Close();
             //                aes.Clear();
@@ -598,5 +601,30 @@ namespace Senparc.CO2NET.Helpers
 
         #endregion
 #endif
+
+        #region 证书相关
+
+        /// <summary>
+        /// 从证书文件内容中获取证书内容（单行字符串）
+        /// </summary>
+        /// <param name="fileContent"></param>
+        public static string GetCertString(string fileContent)
+        {
+            Regex regex = new Regex(@"(--([^\r\n])+--[\r\n]{0,1})|[\r\n]");
+            var certString = regex.Replace(fileContent, "");
+            return certString;
+        }
+
+        /// <summary>
+        /// 从证书文件中获取证书内容（单行字符串）
+        /// </summary>
+        /// <param name="filePath">文件绝对路径</param>
+        public static string GetCertStringFromFile(string filePath)
+        {
+            var fileContent = File.ReadAllText(filePath);
+            return GetCertString(fileContent);
+        }
+
+        #endregion
     }
 }

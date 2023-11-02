@@ -1,5 +1,5 @@
 ﻿/*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：Register.cs
     文件功能描述：WebApi 注册
@@ -123,6 +123,16 @@ namespace Senparc.CO2NET.WebApi
                             var typeAttrs = classType.GetCustomAttributes(typeof(ApiBindAttribute), false)
                                                 .Select(z => z as ApiBindAttribute).ToList();
                             var omitType = typeAttrs.FirstOrDefault(z => CheckOmitCategory(z, assemblyName)) != null;//默认忽略整个类
+
+                            if (typeAttrs.Count > 0 && typeAttrs[0].Ignore)
+                            {
+                                omitType = true;//忽略
+                            }
+
+                            if (omitType)
+                            {
+                                continue;//整个类忽略，不用在继续
+                            }
 
 
                             var coverAllMethods = false;//class 上已经有覆盖所有方法的 [ApiBind] 特性标签

@@ -37,7 +37,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 
 ----------------------------------------------------------------*/
 
-#if !NET451
+#if !NET462
 
 using Microsoft.AspNetCore.Http.Features;
 using System;
@@ -205,7 +205,6 @@ namespace Microsoft.AspNetCore.Http
             return httpContext.Features.Get<IHttpConnectionFeature>()?.RemoteIpAddress;
         }
 
-        
     }
 }
 #endif

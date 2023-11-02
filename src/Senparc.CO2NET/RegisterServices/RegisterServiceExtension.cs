@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,10 +19,10 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：RegisterService.cs
-    文件功能描述：Senparc.Weixin SDK 快捷注册流程
+    文件功能描述：快捷注册类，RegisterService 扩展类
 
 
     创建标识：Senparc - 20180222
@@ -56,7 +56,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Net.Security;
 using System.IO;
 
-#if !NET451
+#if !NET462
 using System.Net.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -69,14 +69,14 @@ namespace Senparc.CO2NET.RegisterServices
     /// </summary>
     public static class RegisterServiceExtension
     {
-#if !NET451 
+#if !NET462 
 
         /// <summary>
         /// 是否已经进行过全局注册
         /// </summary>
         public static bool SenparcGlobalServicesRegistered { get; set; }
 
-        /// <summary>
+        /// <summary>0781-B2EB0781-B2EB0781-B2EB0781-B2EB0781-B2EB0781-B2EB
         /// 注册 IServiceCollection，并返回 RegisterService，开始注册流程（必须）
         /// </summary>
         /// <param name="serviceCollection">IServiceCollection</param>

@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2021 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2022 Senparc
+    Copyright (C) 2023 Senparc
 
     文件名：BrowserUtility.cs
     文件功能描述：浏览器公共类
@@ -68,6 +68,7 @@ namespace Senparc.CO2NET.Utilities
         /// 反序列化
         /// </summary>
         /// <param name="xml">XML字符串</param>
+        /// <param name="rootNodeName"></param>
         /// <returns></returns>
         public static object Deserialize(Type type, string xml, string rootNodeName = null)
         {
@@ -98,18 +99,20 @@ namespace Senparc.CO2NET.Utilities
         /// 反序列化
         /// </summary>
         /// <param name="xml">XML字符串</param>
+        /// <param name="rootNodeName"></param>
         /// <returns></returns>
-        public static object Deserialize<T>(string xml)
+        public static object Deserialize<T>(string xml, string rootNodeName = null)
         {
-            return Deserialize(typeof(T), xml);
+            return Deserialize(typeof(T), xml,rootNodeName);
         }
 
         /// <summary>
         /// 反序列化
         /// </summary>
         /// <param name="stream"></param>
+        /// <param name="rootNodeName"></param>
         /// <returns></returns>
-        public static object Deserialize<T>(Stream stream)
+        public static object Deserialize<T>(Stream stream, string rootNodeName = null)
         {
             XmlSerializer xmldes = new XmlSerializer(typeof(T));
             return xmldes.Deserialize(stream);
@@ -165,7 +168,7 @@ namespace Senparc.CO2NET.Utilities
             {
                 return XDocument.Load(xr);
             }
-            //#if NET451
+            //#if NET462
             //            using (XmlReader xr = XmlReader.Create(stream))
             //            {
             //                return XDocument.Load(xr);
