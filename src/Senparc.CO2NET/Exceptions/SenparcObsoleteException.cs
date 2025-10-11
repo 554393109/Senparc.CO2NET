@@ -19,13 +19,13 @@ Detail: https://github.com/JeffreySu/WeiXinMPSDK/blob/master/license.md
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2023 Senparc
+    Copyright (C) 2025 Senparc
     
-    文件名：SenparcObsoleteException.cs
-    文件功能描述：v1.3.107 接口或方法过期异常
+    FileName：SenparcObsoleteException.cs
+    File Function Description：v1.3.107 Interface or method obsolete exception
     
     
-    创建标识：Senparc - 20200506
+    Creation Identifier：Senparc - 20200506
     
 ----------------------------------------------------------------*/
 
@@ -35,7 +35,7 @@ using System;
 namespace Senparc.CO2NET.Exceptions
 {
     /// <summary>
-    /// 接口或方法过期异常
+    /// Interface or method obsolete exception
     /// </summary>
     public class SenparcObsoleteException : BaseException
     {

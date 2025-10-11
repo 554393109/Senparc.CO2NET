@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2025 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,21 +19,25 @@ Detail: https://github.com/JeffreySu/WeiXinMPSDK/blob/master/license.md
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2023 Senparc
+    Copyright (C) 2025 Senparc
     
-    文件名：ApiBindInfoCollection.cs
-    文件功能描述：API 绑定信息集合
+    FileName：ApiBindInfoCollection.cs
+    File Function Description：API binding information collection
     
     
-    创建标识：Senparc - 20180901
+    Creation Identifier：Senparc - 20180901
     
-    修改标识：Senparc - 20190513
-    修改描述：v0.6.7 添加 ApiBindInfoCollection.GetGroupedCollection() 方法
+    Modification Identifier：Senparc - 20190513
+    Modification Description：v0.6.7 Added ApiBindInfoCollection.GetGroupedCollection() method
 
-    ---------- 2021.6.27 从 Senparc.NeuChar 移植
+    ---------- 2021.6.27 Migrated from Senparc.NeuChar
+
+    Modification Identifier：Senparc - 20241119
+    Modification Description：v3.0.0-beta3 reconstruction
 
 ----------------------------------------------------------------*/
 
+using Senparc.CO2NET.Extensions;
 using Senparc.CO2NET.WebApi;
 using System;
 using System.Collections.Generic;
@@ -44,18 +48,18 @@ using System.Text;
 namespace Senparc.CO2NET.ApiBind
 {
     /// <summary>
-    /// ApiBind 绑定信息的全局唯一集合
+    /// Globally unique collection of ApiBind binding information
     /// </summary>
     public class ApiBindInfoCollection : Dictionary<string, ApiBindInfo>
     {
         #region 单例
 
-        //静态SearchCache
+        //Static SearchCache
         public static ApiBindInfoCollection Instance
         {
             get
             {
-                return Nested.instance;//返回Nested类中的静态成员instance
+                return Nested.instance;//Returns the static member instance in the Nested class
             }
         }
 
@@ -64,25 +68,14 @@ namespace Senparc.CO2NET.ApiBind
             static Nested()
             {
             }
-            //将instance设为一个初始化的BaseCacheStrategy新实例
+            //Set instance to a new initialized BaseCacheStrategy instance
             internal static readonly ApiBindInfoCollection instance = new ApiBindInfoCollection();
         }
 
         #endregion
 
         /// <summary>
-        /// 获取全局唯一名称
-        /// </summary>
-        /// <param name="category">目录（平台类型），用于输出 API 的 Url 时分组</param>
-        /// <param name="apiBindAttrName">跨程序集的通用名称（如：CustomApi.SendText）</param>
-        /// <returns></returns>
-        private string GetGlobalName(string category, string apiBindAttrName)
-        {
-            return $"{category}:{apiBindAttrName}";//TODO：生成全局唯一名称
-        }
-
-        /// <summary>
-        /// ApiBindCollection 构造函数
+        /// ApiBindCollection constructor
         /// </summary>
         public ApiBindInfoCollection() : base(StringComparer.OrdinalIgnoreCase)
         {
@@ -90,36 +83,39 @@ namespace Senparc.CO2NET.ApiBind
         }
 
         /// <summary>
-        /// 添加 ApiBindInfo 对象
+        /// Add ApiBindInfo object
         /// </summary>
         /// <param name="method"></param>
         /// <param name="apiBindAttr"></param>
         public void Add(ApiBindOn apiBindOn, string cagtegory, MethodInfo method, ApiBindAttribute apiBindAttr)
         {
             var category = apiBindAttr.GetCategoryName(method);
-            var name = apiBindAttr.GetName(method);
-            var globalName = GetGlobalName(category, name);
+            var apiBindAttrName = apiBindAttr.GetApiBindAttrName(method);
+            var globalName = apiBindAttr.GetGlobalName(method);
 
             var finalGlobalName = globalName;
             var suffix = 0;
-            //确保名称不会重复
+            //Ensure the name is not duplicated
             while (base.ContainsKey(finalGlobalName))
             {
                 suffix++;
                 finalGlobalName = globalName + suffix.ToString("00");
             }
 
-            base.Add(finalGlobalName, new ApiBindInfo(apiBindOn, cagtegory, finalGlobalName, name, apiBindAttr.BaseApiControllerType, apiBindAttr.BaseApiControllerOrder, apiBindAttr, method));
+            //TODO: move all functions to ctor. by input method
+
+            var apiBindInfo = new ApiBindInfo(apiBindOn, cagtegory, finalGlobalName, apiBindAttrName, apiBindAttr.BaseApiControllerType, apiBindAttr.BaseApiControllerOrder, apiBindAttr, method);
+            base.Add(finalGlobalName, apiBindInfo);
         }
 
         /// <summary>
-        /// 获取 ApiBindInfo
+        /// Get ApiBindInfo
         /// </summary>
-        /// <param name="category">目录（平台类型），用于输出 API 的 Url 时分组</param>
-        /// <param name="apiBindAttrName">跨程序集的通用名称（如：CustomApi.SendText）</param>
+        /// <param name="category">Category (platform type), used for grouping when outputting API Url</param>
+        /// <param name="apiBindAttrName">Common name across assemblies (e.g., CustomApi.SendText)</param>
         public ApiBindInfo Get(string category, string apiBindAttrName)
         {
-            var name = GetGlobalName(category, apiBindAttrName);
+            var name = ApiBindAttribute.GetGlobalName(category, apiBindAttrName);
             if (ApiBindInfoCollection.Instance.ContainsKey(name))
             {
                 return ApiBindInfoCollection.Instance[name];
@@ -128,7 +124,7 @@ namespace Senparc.CO2NET.ApiBind
         }
 
         /// <summary>
-        /// 获取不同模块的分组 API 绑定信息（注意：每次获取都会重新执行分组过程）
+        /// Get grouped API binding information for different modules (Note: Each retrieval will re-execute the grouping process)
         /// </summary>
         /// <returns></returns>
         public IEnumerable<IGrouping<string, KeyValuePair<string, ApiBindInfo>>> GetGroupedCollection()

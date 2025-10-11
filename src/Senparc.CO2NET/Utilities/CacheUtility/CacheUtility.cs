@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2025 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,20 +19,20 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2023 Senparc
+    Copyright (C) 2025 Senparc
 
-    文件名：CacheUtility.cs
-    文件功能描述：缓存工具类
+    FileName: CacheUtility.cs
+    File Function Description: Cache utility class
 
 
-    创建标识：Senparc - 20160318
+    Creation Identifier: Senparc - 20160318
 
 
     ----  CO2NET   ----
     ----  split from Senparc.Weixin/Utilities/CacheUtility.cs  ----
 
-    修改标识：Senparc - 20180601
-    修改描述：v0.1.0 移植 CacheUtility
+    Modification Identifier: Senparc - 20180601
+    Modification Description: v0.1.0 migrated CacheUtility
 
 ----------------------------------------------------------------*/
 
@@ -47,7 +47,7 @@ using System.Text;
 namespace Senparc.CO2NET.CacheUtility
 {
     ///// <summary>
-    ///// 缓存工具类
+    ///// Cache utility class
     ///// </summary>
     //public class CacheUtility
     //{

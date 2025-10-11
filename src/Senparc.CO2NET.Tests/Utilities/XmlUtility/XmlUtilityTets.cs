@@ -1,5 +1,6 @@
-using System;
+锘縰sing System;
 using System.IO;
+using System.Threading.Tasks;
 using System.Xml.Serialization;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Senparc.CO2NET.Tests.TestEntities;
@@ -13,7 +14,7 @@ namespace Senparc.CO2NET.Tests.Utilities
         string xml = @"<TestCustomObject>
 <Id>666</Id>
 <Name>Jeffrey</Name>
-</TestCustomObject>";//注意：根节点名称需要和实体类名相同，否则可能需要设置xmlns等
+</TestCustomObject>";// Note: When serializing, ensure that the same namespace is used, and that xmlns is specified
 
         [TestMethod]
         public void DeserializeTest()
@@ -27,7 +28,7 @@ namespace Senparc.CO2NET.Tests.Utilities
         [TestMethod]
         public void DeserializeStreamTest()
         {
-            using (var ms = new MemoryStream())//模拟已有stream
+            using (var ms = new MemoryStream())// Model for stream
             {
                 using (var sw = new StreamWriter(ms))
                 {
@@ -68,7 +69,7 @@ namespace Senparc.CO2NET.Tests.Utilities
         [TestMethod]
         public void ConvertTest()
         {
-            using (var ms = new MemoryStream())//模拟已有stream
+            using (var ms = new MemoryStream())// Model for stream
             {
                 using (var sw = new StreamWriter(ms))
                 {
@@ -81,6 +82,41 @@ namespace Senparc.CO2NET.Tests.Utilities
 
                     Assert.AreEqual("666", xdoc.Root.Element("Id").Value);
                     Assert.AreEqual("Jeffrey", xdoc.Root.Element("Name").Value);
+                }
+            }
+        }
+
+        [TestMethod]
+        public async Task ConvertAsyncTest()
+        {
+            using (var ms = new MemoryStream())// Model for stream
+            {
+                using (var sw = new StreamWriter(ms))
+                {
+                    await sw.WriteAsync(xml);
+                    await sw.FlushAsync();
+                    ms.Seek(0, SeekOrigin.Begin);
+
+                    var xdoc = await XmlUtility.ConvertAsync(ms, new System.Threading.CancellationToken());
+                    Console.WriteLine(xdoc.ToString());
+
+                    Assert.AreEqual("666", xdoc.Root.Element("Id").Value);
+                    Assert.AreEqual("Jeffrey", xdoc.Root.Element("Name").Value);
+
+                    //Test whether sw didn't closed
+                    ms.Seek(0, SeekOrigin.End);
+                    await sw.WriteAsync("<END></END>");
+                    await sw.FlushAsync();
+                    ms.Seek(0,SeekOrigin.Begin);
+
+                    using (var sr =new StreamReader(ms))
+                    {
+                        var str = await sr.ReadToEndAsync();
+                        Console.WriteLine("new Str:");
+                        Console.WriteLine(str);
+                        Assert.IsTrue(str.EndsWith("<END></END>"));
+                    }
+
                 }
             }
         }

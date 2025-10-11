@@ -19,7 +19,7 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2020 Senparc
+    Copyright (C) 2025 Senparc
 
     文件名：Program.cs
     文件功能描述：Console 示例（同样适用于 WinForm 和 WPF）
@@ -56,7 +56,6 @@ Console.WriteLine("完成 ServiceCollection 和 ConfigurationBuilder 初始化")
 //更多绑定操作参见：https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-2.2
 var senparcSetting = new SenparcSetting();
 config.GetSection("SenparcSetting").Bind(senparcSetting);
-
 
 var services = new ServiceCollection();
 services.AddMemoryCache();//使用本地缓存必须添加
@@ -98,13 +97,13 @@ if (useRedis)//这里为了方便不同环境的开发者进行配置，做成�
      * 1、Redis 的连接字符串信息会从 Config.SenparcSetting.Cache_Redis_Configuration 自动获取并注册，如不需要修改，下方方法可以忽略
     /* 2、如需手动修改，可以通过下方 SetConfigurationOption 方法手动设置 Redis 链接信息（仅修改配置，不立即启用）
      */
-    Senparc.CO2NET.Cache.Redis.Register.SetConfigurationOption(redisConfigurationStr);
-    Console.WriteLine("完成 Redis 设置");
+    Senparc.CO2NET.Cache.CsRedis.Register.SetConfigurationOption(redisConfigurationStr);
+    Console.WriteLine("完成 CsRedis 设置");
 
 
     //以下会立即将全局缓存设置为 Redis
-    Senparc.CO2NET.Cache.Redis.Register.UseKeyValueRedisNow();//键值对缓存策略（推荐）
-    Console.WriteLine("启用 Redis UseKeyValue 策略");
+    Senparc.CO2NET.Cache.CsRedis.Register.UseKeyValueRedisNow();//键值对缓存策略（推荐）
+    Console.WriteLine("启用 CsRedis UseKeyValue 策略");
 
     //Senparc.CO2NET.Cache.Redis.Register.UseHashRedisNow();//HashSet储存格式的缓存策略
 
@@ -156,9 +155,19 @@ register.RegisterTraceLog(ConfigTraceLog);//配置TraceLog
 Console.WriteLine("Hello CO2NET!");
 Console.WriteLine($"Total initialization time: {SystemTime.DiffTotalMS(dt1)}ms");
 
-Console.WriteLine($"当前缓存策略: {CacheStrategyFactory.GetObjectCacheStrategyInstance()}");
+var cacheStrategy = CacheStrategyFactory.GetObjectCacheStrategyInstance();
+Console.WriteLine($"当前缓存策略: {cacheStrategy}");
+var servierProviderScope = services.BuildServiceProvider().CreateScope();
+var cache = servierProviderScope.ServiceProvider.GetRequiredService<IBaseObjectCacheStrategy>();
+Console.WriteLine($"依赖注入缓存策略: {cache}（{(cache == cacheStrategy ? "成功" : "失败")}）");
 
-Console.WriteLine($"SenparcSetting: {Config.SenparcSetting.ToJson(true)}");
+//存入缓存
+await cache.SetAsync("Setting", Config.SenparcSetting);
+
+//读取缓存
+var settingFromCache = await cache.GetAsync<SenparcSetting>("Setting");
+
+Console.WriteLine($"从缓读取 SenparcSetting: {settingFromCache.ToJson(true)}");
 
 
 Console.ReadLine();

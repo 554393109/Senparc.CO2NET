@@ -1,7 +1,7 @@
 ﻿#region Apache License Version 2.0
 /*----------------------------------------------------------------
 
-Copyright 2023 Suzhou Senparc Network Technology Co.,Ltd.
+Copyright 2025 Suzhou Senparc Network Technology Co.,Ltd.
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
 except in compliance with the License. You may obtain a copy of the License at
@@ -19,33 +19,36 @@ Detail: https://github.com/Senparc/Senparc.CO2NET/blob/master/LICENSE
 #endregion Apache License Version 2.0
 
 /*----------------------------------------------------------------
-    Copyright (C) 2023 Senparc
+    Copyright (C) 2025 Senparc
 
-    文件名：RedisObjectCacheStrategy.cs
-    文件功能描述：Redis的Object类型容器缓存（Key为String类型）。
+    FileName：RedisObjectCacheStrategy.cs
+    File Function Description：Redis Object type container cache (Key is String type).
 
 
-    创建标识：Senparc - 20161024
+    Creation Identifier：Senparc - 20161024
 
-    修改标识：Senparc - 20170205
-    修改描述：v0.2.0 重构分布式锁
+    Modification Identifier：Senparc - 20170205
+    Modification Description：v0.2.0 Refactor distributed lock
 
     --CO2NET--
 
-    修改标识：Senparc - 20180714
-    修改描述：v3.0.0 改为 Key-Value 实现
+    Modification Identifier：Senparc - 20180714
+    Modification Description：v3.0.0 Changed to Key-Value implementation
 
-    修改标识：Senparc - 20180715
-    修改描述：v3.0.1 添加 GetAllByPrefix() 方法
+    Modification Identifier：Senparc - 20180715
+    Modification Description：v3.0.1 Added GetAllByPrefix() method
 
-    修改标识：Senparc - 20190418
-    修改描述：v3.5.0.1 添加 GetAllByPrefixAsync() 方法
+    Modification Identifier：Senparc - 20190418
+    Modification Description：v3.5.0.1 Added GetAllByPrefixAsync() method
 
-    修改标识：Senparc - 20190914
-    修改描述：v3.5.4 fix bug：GetServer().Keys() 方法添加 database 索引值
+    Modification Identifier：Senparc - 20190914
+    Modification Description：v3.5.4 fix bug: GetServer().Keys() method added database index value
 
-    修改标识：Senparc - 20230527
-    修改描述：v4.1.3 RedisObjectCacheStrategy 方法添加纯字符串的判断
+    Modification Identifier：Senparc - 20230527
+    Modification Description：v4.1.3 RedisObjectCacheStrategy method added pure string check
+
+    Modification Identifier：Senparc - 20240910
+    Modification Description：v4.2.5 Fixed GetAllByPrefixAsync(key) method automatically fetching all Keys bug
 
 ----------------------------------------------------------------*/
 
@@ -62,26 +65,26 @@ using System.Threading.Tasks;
 namespace Senparc.CO2NET.Cache.Redis
 {
     /// <summary>
-    /// Redis的Object类型容器缓存（Key为String类型），Key-Value 类型储存
+    /// Redis Object type container cache (Key is String type), Key-Value type storage
     /// </summary>
     public class RedisObjectCacheStrategy : BaseRedisObjectCacheStrategy
     {
-        #region 单例
+        #region Singleton
 
         /// <summary>
-        /// Redis 缓存策略
+        /// Redis cache strategy
         /// </summary>
         RedisObjectCacheStrategy() : base()
         {
 
         }
 
-        //静态SearchCache
+        //Static SearchCache
         public static RedisObjectCacheStrategy Instance
         {
             get
             {
-                return Nested.instance;//返回Nested类中的静态成员instance
+                return Nested.instance;//Returns the static member instance in the Nested class
             }
         }
 
@@ -90,22 +93,22 @@ namespace Senparc.CO2NET.Cache.Redis
             static Nested()
             {
             }
-            //将instance设为一个初始化的BaseCacheStrategy新实例
+            //Set instance to a new initialized BaseCacheStrategy instance
             internal static readonly RedisObjectCacheStrategy instance = new RedisObjectCacheStrategy();
         }
 
         #endregion
 
 
-        #region 实现 IBaseObjectCacheStrategy 接口
+        #region Implement IBaseObjectCacheStrategy interface
 
-        #region 同步接口
+        #region Synchronous interface
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="isFullKey">是否已经是完整的Key</param>
+        /// <param name="isFullKey">Whether it is already a full Key</param>
         /// <returns></returns>
         public override bool CheckExisted(string key, bool isFullKey = false)
         {
@@ -170,12 +173,12 @@ namespace Senparc.CO2NET.Cache.Redis
         }
 
         /// <summary>
-        /// 注意：此方法获取的object为直接储存在缓存中，序列化之后的Value
+        /// Note: The object obtained by this method is the serialized Value stored directly in the cache
         /// </summary>
         /// <returns></returns>
         public override IDictionary<string, object> GetAll()
         {
-            var keyPrefix = GetFinalKey("");//获取带Senparc:DefaultCache:前缀的Key（[DefaultCache]可配置）
+            var keyPrefix = GetFinalKey("");//Get the Key with the prefix Senparc:DefaultCache: ([DefaultCache] configurable)
             var dic = new Dictionary<string, object>();
 
 
@@ -187,17 +190,31 @@ namespace Senparc.CO2NET.Cache.Redis
             return dic;
         }
 
-        //TODO: 提供 GetAllKeys() 方法
+        //TODO: Provide GetAllKeys() method
 
 
+        /// <summary>
+        /// Get the count of all cache items (up to 99999 items)
+        /// </summary>
+        /// <returns></returns>
         public override long GetCount()
         {
-            var keyPattern = GetFinalKey("*");//获取带Senparc:DefaultCache:前缀的Key（[DefaultCache]         
-            var count = GetServer().Keys(database: Client.GetDatabase().Database, pattern: keyPattern, pageSize: 99999).Count();
+            return GetCount(null);
+        }
+
+        /// <summary>
+        /// Get the count of all cache items (up to 99999 items)
+        /// </summary>
+        /// <returns></returns>
+
+        public override long GetCount(string prefix)
+        {
+            var keyPattern = GetFinalKey(prefix + "*");//Get the Key with the prefix Senparc:DefaultCache: ([DefaultCache]
+            var count = GetServer().Keys(database: Client.GetDatabase().Database, pattern: keyPattern, pageSize: 99999).LongCount();
             return count;
         }
 
-        [Obsolete("此方法已过期，请使用 Set(TKey key, TValue value) 方法")]
+        [Obsolete("此方法已过期，请使用 Set(TKey key, TValue value) 方法", true)]
         public override void InsertToCache(string key, object value, TimeSpan? expiry = null)
         {
             Set(key, value, expiry, false);
@@ -225,8 +242,8 @@ namespace Senparc.CO2NET.Cache.Redis
 
             var cacheKey = GetFinalKey(key, isFullKey);
 
-            SenparcMessageQueue.OperateQueue();//延迟缓存立即生效
-            _cache.KeyDelete(cacheKey);//删除键
+            SenparcMessageQueue.OperateQueue();//Delayed cache takes effect immediately
+            _cache.KeyDelete(cacheKey);//Delete key
         }
 
         public override void Update(string key, object value, TimeSpan? expiry = null, bool isFullKey = false)
@@ -237,13 +254,13 @@ namespace Senparc.CO2NET.Cache.Redis
         #endregion
 
 
-        #region 异步方法
+        #region Asynchronous methods
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="key"></param>
-        /// <param name="isFullKey">是否已经是完整的Key</param>
+        /// <param name="isFullKey">Whether it is already a full Key</param>
         /// <returns></returns>
         public override async Task<bool> CheckExistedAsync(string key, bool isFullKey = false)
         {
@@ -308,12 +325,12 @@ namespace Senparc.CO2NET.Cache.Redis
         }
 
         /// <summary>
-        /// 注意：此方法获取的object为直接储存在缓存中，序列化之后的Value（最多 99999 条）
+        /// Note: The object obtained by this method is the serialized Value stored directly in the cache (up to 99999 items)
         /// </summary>
         /// <returns></returns>
         public override async Task<IDictionary<string, object>> GetAllAsync()
         {
-            var keyPrefix = GetFinalKey("");//获取带Senparc:DefaultCache:前缀的Key（[DefaultCache]可配置）
+            var keyPrefix = GetFinalKey("");//Get the Key with the prefix Senparc:DefaultCache: ([DefaultCache] configurable)
             var dic = new Dictionary<string, object>();
 
             var keys = GetServer().Keys(database: Client.GetDatabase().Database, pattern: keyPrefix + "*", pageSize: 99999);
@@ -323,11 +340,13 @@ namespace Senparc.CO2NET.Cache.Redis
             }
             return dic;
         }
-
-
         public override Task<long> GetCountAsync()
         {
             return Task.Factory.StartNew(() => GetCount());
+        }
+        public override Task<long> GetCountAsync(string prefix)
+        {
+            return Task.Factory.StartNew(() => GetCount(prefix));
         }
 
         public override async Task SetAsync(string key, object value, TimeSpan? expiry = null, bool isFullKey = false)
@@ -352,8 +371,8 @@ namespace Senparc.CO2NET.Cache.Redis
 
             var cacheKey = GetFinalKey(key, isFullKey);
 
-            SenparcMessageQueue.OperateQueue();//延迟缓存立即生效
-            await _cache.KeyDeleteAsync(cacheKey).ConfigureAwait(false);//删除键
+            SenparcMessageQueue.OperateQueue();//Delayed cache takes effect immediately
+            await _cache.KeyDeleteAsync(cacheKey).ConfigureAwait(false);//Delete key
         }
 
         public override async Task UpdateAsync(string key, object value, TimeSpan? expiry = null, bool isFullKey = false)
@@ -366,11 +385,11 @@ namespace Senparc.CO2NET.Cache.Redis
         #endregion
 
         /// <summary>
-        /// 根据 key 的前缀获取对象列表（最多 99999 条）
+        /// Get the object list by key prefix (up to 99999 items)
         /// </summary>
         public IList<T> GetAllByPrefix<T>(string key)
         {
-            var keyPattern = GetFinalKey("*");//获取带Senparc:DefaultCache:前缀的Key（[DefaultCache]         
+            var keyPattern = GetFinalKey(key + "*");//Get the Key with the prefix Senparc:DefaultCache: ([DefaultCache]         
             var keys = GetServer().Keys(database: Client.GetDatabase().Database, pattern: keyPattern, pageSize: 99999);
             List<T> list = new List<T>();
             foreach (var fullKey in keys)
@@ -387,11 +406,11 @@ namespace Senparc.CO2NET.Cache.Redis
 
 
         /// <summary>
-        /// 【异步方法】根据 key 的前缀获取对象列表（最多 99999 条）
+        /// [Async method] Get the object list by key prefix (up to 99999 items)
         /// </summary>
         public async Task<IList<T>> GetAllByPrefixAsync<T>(string key)
         {
-            var keyPattern = GetFinalKey("*");//获取带Senparc:DefaultCache:前缀的Key（[DefaultCache]         
+            var keyPattern = GetFinalKey(key + "*");//Get the Key with the prefix Senparc:DefaultCache: ([DefaultCache]         
             var keys = GetServer().Keys(database: Client.GetDatabase().Database, pattern: keyPattern, pageSize: 99999);
             List<T> list = new List<T>();
             foreach (var fullKey in keys)
